@@ -30,7 +30,9 @@ CPU与外设靠系统总线、IO bridge和IO总线联系起来，一旦外设有
 
 高速缓存结构：
 ![高速缓存结构](images/cache-2.png)
+
 看个更直观的：
 ![高速缓存结构](images/cache-3.jpg)
+
 寄存器、各级缓存和内存的速度：
 ![高速缓存结构](images/cache-4.png)
