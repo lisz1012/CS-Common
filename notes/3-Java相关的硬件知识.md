@@ -34,5 +34,9 @@ CPU与外设靠系统总线、IO bridge和IO总线联系起来，一旦外设有
 看个更直观的：  
 ![高速缓存结构](images/cache-3.jpg)
 
-寄存器、各级缓存和内存的速度：  
-![高速缓存结构](images/cache-4.png)
+CPU访问寄存器、各级缓存和内存的速度：  
+Registers| <1ns
+L1 Cache|约1ns
+L2 Cache|约3ns
+L3 Cache|约15ns
+Main Memory|约80ns
