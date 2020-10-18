@@ -51,4 +51,15 @@ Memory Access），而不是走CPU。按块读取的时候，块的大小有的�
 
 #### MESI
 四种状态：Modified、Exclusive、Shared、Invalid。在一个CPU里面的缓存行是Modified，修改过了，则在里一个中就是Invalid，要重新读取。文本
-特别繁琐，不用看。
+特别繁琐，不用看。除了MESI之外，还有很多缓存一致性协议：MOSI、MSI、Synapse、Firefly、Dragon
+
+#### 锁总线
+有的数据一个缓存行装不下，这个时候就去锁定总线，肯定就没有数据不一致的情况了，但是跟MESI相比效率低，能用MESI的就用MESI
+
+#### 缓存行的大小
+缓存行越大，局部性空间效率越高，但是读取时间慢；缓存行越小，局部空间效率越低，但是读取时间快。取个折中值，目前多用64字节。
+
+#### 缓存行对齐的编程方式
+在Distruptor中，在long cursor的前后都加上7个long，保证他绝对不会跟其他的数据放到同一个缓存行里。加上@Contended也可以保证这个变量跟
+别的变量不在同一个缓存行, 但是JVM要设置参数：`-XX:-RestrictContended`. @Contended可以根据底层的CPU缓存行的长度设定，办证变量独占一个
+缓存行
