@@ -82,6 +82,8 @@ Intel底层通过lfence、sfence、mfence，分别是读（load）、写（save�
 CPU来时用各自的原语，而是统一用Lock指令（周志明的书上有说）
 
 ### JSR内存屏障
+
+#### 定义
 这是Java 虚拟机要求的规范，跟硬件没有关系，是不同层面的事情。Java就要求某些指令在某些JVM的屏障前后不能重排序，所以以下是JVM的规范要求。
 然后Hotspot再去写实现，可以用s/m/lfence或者Lock实现。这里只说JVM的规范的要求：
 - LoadLoad屏障  
@@ -116,3 +118,20 @@ CPU来时用各自的原语，而是统一用Lock指令（周志明的书上有�
   Load2
   ```
   在Load2及后续所有读取操作执行前，保证Store1的写入对所有处理器可见
+  
+#### volatile 的实现细节
+JVM层面（背过，好像是ali问到了volatile在JVM层级的实现，很保守，具体还是用Lock指令实现的）：
+```
+StoreStore屏障
+volatile写操作
+StoreLoad屏障
+```
+volatile写不能早于上面的写操作，而下面的的读取，必须要等这里的写操作完成之后才可以读。这就保证了对下面代码的可见性，而且还不会有重排序
+```
+LoadLoad屏障
+volatile读操作
+LoadStore屏障
+```
+上面的Load跟volatile Load不可互换，下面的写操作要等volatile读完了才可以写，也保证了对下面代码的可见性，而且还不会有重排序。  
+
+volatile变量t如果指向了对象，对整个t所指向的对象的改动都会前后加内存屏障。
