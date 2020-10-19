@@ -75,4 +75,44 @@ Memory Access），而不是走CPU。按块读取的时候，块的大小有的�
 ### CPU层面如何禁止指令重排
 答：内存屏障。对某一部分内存操作的时候，前后添加的屏障，屏障前后的操作不可以乱序执行屏障上面的命令全执行完了，才可以执行屏障下面的命令。
 Intel底层通过lfence、sfence、mfence，分别是读（load）、写（save）和读写屏障（mixed）。当然也可以通过总线锁来实现。volatile并不是用的
-这里的原语实现的，而是lock指令（锁屏障）
+这里的原语实现的，而是lock指令（锁屏障，lock addl 0x0 esp）.Lock指令是一个原子指令，如x86上的"lock..."指令是一个Full Barrier（读写
+指令都不能进行重排序），执行时会锁住内存子系统(锁内存总线)来确保执行顺序，甚至跨多个CPU。Software Locks通常使用了内存屏障或原子指令来实现
+变量可见性和保持程序顺序. Lock指令一执行，整个Lock前面的都的执行完了，该刷的数据刷到内存里面去，后面的才能继续执行。所以使用原语要比lock
+指令效率高，s/m/lfence 原语Intel CPU有，其他的CPU不一定有，但是Lock指令很多CPU都有。所以Hotspot在实现的时候就偷懒了，并没有根据不同的
+CPU来时用各自的原语，而是统一用Lock指令（周志明的书上有说）
+
+### JSR内存屏障
+这是Java 虚拟机要求的规范，跟硬件没有关系，是不同层面的事情。Java就要求某些指令在某些JVM的屏障前后不能重排序，所以以下是JVM的规范要求。
+然后Hotspot再去写实现，可以用s/m/lfence或者Lock实现。这里只说JVM的规范的要求：
+- LoadLoad屏障  
+  对于这样的语句：
+  ```
+  Load1;
+  LoadLoad屏障
+  Load2
+  ```
+  在Load2及后续读取操作要读取的数据被访问前，保证Load1要读取的数据已被读取完毕
+- StoreStore屏障  
+  对于这样的语句：
+  ```
+  Store1;
+  StoreStore屏障
+  Store2
+  ```
+  在Store2及后续写入操作执行前，保证Store1的写入操作对其他处理器可见。
+- LoadStore屏障  
+  对于这样的语句：
+  ```
+  Load1;
+  LoadStore屏障
+  Store2
+  ```
+  在Store2及后续写入操作被刷出前，保证Load1要读取的数据已被读取完毕
+- StoreLoad屏障  
+  对于这样的语句：
+  ```
+  Store1;
+  StoreLoad屏障
+  Load2
+  ```
+  在Load2及后续所有读取操作执行前，保证Store1的写入对所有处理器可见
