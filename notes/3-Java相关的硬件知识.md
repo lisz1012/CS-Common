@@ -134,4 +134,15 @@ LoadStore屏障
 ```
 上面的Load跟volatile Load不可互换，下面的写操作要等volatile读完了才可以写，也保证了对下面代码的可见性，而且还不会有重排序。  
 
-volatile变量t如果指向了对象，对整个t所指向的对象的改动都会前后加内存屏障，以保证不会重排序.
+volatile变量t如果指向了对象，对整个t所指向的对象的改动都会前后加内存屏障，以保证不会重排序.  
+
+### 禁止乱序
+
+- CPU层面上，Intel -> 原语：s/m/lfence或者锁总线
+- JVM层面上8个`happens before`原则和4个内存屏障（LL、LS、SL、SS）
+`as if serial`: 不管如何重排序，单线程执行结果不变。很多请求发过来之后要求先来后到顺序执行：用SingleThreadPool，队列做成有界队列，
+然后设置拒绝策略
+
+### 合并写技术（选看）
+ALU和内存之间有L1-3 cache，ALU和L1之间还有一级缓存，一个buffer，只有4字节（写到L1的3-4ns对CPU来说还是太长），叫WC buffer，Write
+Combining Buffer，这个buffer被CPU写满之后，一次性刷到L2缓存中。这块就别跟面试官聊了，对方八成儿不懂，认为你是在装懂。
